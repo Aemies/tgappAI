@@ -31,6 +31,8 @@ async def update_settings(body: SettingsIn, user: User = Depends(current_user), 
 
 
 @router.get("/overview")
-async def overview(user: User = Depends(current_user)):
-    """Сводка для вкладки «Обзор». Пока портфеля нет, всё нули."""
-    return {"clients": 0, "checked_today": 0, "new_events": 0, "errors": 0}
+async def overview(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    """Сводка для вкладки «Обзор». Проверки и события появятся на этапе мониторинга."""
+    from .clients import portfolio_count
+
+    return {"clients": await portfolio_count(db, user), "checked_today": 0, "new_events": 0, "errors": 0}

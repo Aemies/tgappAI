@@ -25,3 +25,19 @@ export async function login(): Promise<User> {
 
 export const getOverview = () => call<Overview>("/overview");
 export const saveSettings = (body: { timezone?: string; accept_terms?: boolean }) => call<User>("/settings", { method: "PUT", body: JSON.stringify(body) });
+
+export type Credential = { connected: boolean; key_mask?: string | null; status?: string | null; last_tested_at?: string | null; last_error?: string | null; requests_today?: number | null };
+export type Client = { id: number; inn: string; subject_type: string; label: string | null; fetch_status: string; fetch_error: string | null; name: string | null; status: string | null; region: string | null };
+export type Card = Client & { summary: Record<string, string | number | null> | null; fetched_at: string | null };
+
+export const getChecko = () => call<Credential>("/integrations/checko");
+export const saveChecko = (api_key: string) => call<Credential>("/integrations/checko", { method: "POST", body: JSON.stringify({ api_key }) });
+export const testChecko = () => call<Credential>("/integrations/checko/test", { method: "POST" });
+export const deleteChecko = () => call<Credential>("/integrations/checko", { method: "DELETE" });
+
+export const listClients = () => call<Client[]>("/clients");
+export const addClient = (inn: string) => call<Card>("/clients", { method: "POST", body: JSON.stringify({ inn }) });
+export const importClients = (text: string) => call<{ added: number; duplicates: number; invalid: string[] }>("/clients/import", { method: "POST", body: JSON.stringify({ text }) });
+export const getClient = (id: number) => call<Card>(`/clients/${id}`);
+export const refreshClient = (id: number) => call<Card>(`/clients/${id}/refresh`, { method: "POST" });
+export const deleteClient = (id: number) => call<{ ok: boolean }>(`/clients/${id}`, { method: "DELETE" });

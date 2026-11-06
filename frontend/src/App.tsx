@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getOverview, login, saveSettings, type Overview, type User } from "./api";
+import { Clients } from "./Clients";
+import { Settings } from "./Settings";
 
 const TABS = [
   { id: "overview", label: "Обзор" },
@@ -10,8 +12,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"] | "settings";
 
-const EMPTY: Record<Exclude<Tab, "overview" | "settings">, string> = {
-  clients: "Здесь будет ваш портфель ИНН. Добавление клиентов появится на следующем этапе.",
+const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients">, string> = {
   events: "Здесь появятся изменения в ЕГРЮЛ и новые связанные компании по вашим клиентам.",
   programs: "Здесь будут подходящие госпрограммы и причины подбора.",
   finance: "Здесь будут выручка, прибыль, долг и выводы по отчётности.",
@@ -22,6 +23,10 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
+
+  useEffect(() => {
+    if (user && tab === "overview") getOverview().then(setOverview).catch(() => {});
+  }, [tab]);
 
   useEffect(() => {
     login()
@@ -61,16 +66,11 @@ export function App() {
               <Stat label="Новых событий" value={overview?.new_events} />
               <Stat label="Ошибок" value={overview?.errors} />
             </div>
-            <p className="muted">Портфель пока пуст.</p>
+            {overview?.clients === 0 && <button className="primary" onClick={() => setTab("clients")}>Добавить ИНН</button>}
           </>
         )}
-        {tab === "settings" && (
-          <>
-            <h1>Настройки</h1>
-            <p>Часовой пояс: {user.timezone}</p>
-            <p className="muted">Источники данных (Checko) и «Мой ИИ» появятся на следующих этапах.</p>
-          </>
-        )}
+        {tab === "settings" && <Settings user={user} />}
+        {tab === "clients" && <Clients onNeedKey={() => setTab("settings")} />}
         {tab in EMPTY && (
           <>
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>

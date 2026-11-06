@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     default_timezone: str = "Europe/Moscow"
     # Папка со сборкой Mini App. Если задана, backend сам отдаёт кабинет (режим «всё в одном» для Mac)
     static_dir: str = ""
+    # Мастер-ключ шифрования пользовательских ключей (base64, 32 байта)
+    encryption_master_key: str = ""
+    checko_base_url: str = "https://api.checko.ru/v2"
 
 
 @lru_cache

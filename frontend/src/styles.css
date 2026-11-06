@@ -25,3 +25,18 @@ button.icon { font-size: 20px; }
 nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; background: var(--card); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
 nav button { flex: 1; padding: 8px 2px; font-size: 11px; color: var(--hint); border-radius: 8px; }
 nav button.active { color: var(--accent); font-weight: 600; }
+h2 { font-size: 16px; margin: 0 0 8px; }
+.card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+input, textarea { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--hint) 40%, transparent); background: var(--bg); color: var(--text); margin: 6px 0; }
+button.secondary, label.secondary { padding: 10px 14px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-weight: 500; cursor: pointer; }
+button.danger { color: #d33; background: color-mix(in srgb, #d33 10%, transparent); }
+button.narrow { width: auto; white-space: nowrap; padding: 10px 16px; }
+button.link { color: var(--accent); padding: 4px 0; }
+button:disabled { opacity: .5; }
+.small { font-size: 13px; }
+.ok { color: #2a9d55; } .bad { color: #d33; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); cursor: pointer; }
+.list .name { font-weight: 500; }
+.fields div { padding: 6px 0; } .fields dt { color: var(--hint); font-size: 12px; } .fields dd { margin: 0; }
