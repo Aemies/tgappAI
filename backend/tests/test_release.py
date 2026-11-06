@@ -92,6 +92,16 @@ async def test_rate_limit_and_body_limit(client):
     r = await client.post("/api/v1/clients/import", content=f'{{"text": "{big}"}}', headers={**h, "Content-Type": "application/json"})
     assert r.status_code == 413
 
+    # Через туннель Cloudflare запросы приходят частями, без Content-Length: пустой POST должен проходить,
+    # а большое тело всё равно отсекаться
+    async def chunks(data):
+        yield data
+
+    r = await client.post("/api/v1/integrations/checko/test", content=chunks(b""), headers=h)
+    assert r.status_code != 411 and r.status_code < 500
+    r = await client.post("/api/v1/clients/import", content=chunks(f'{{"text": "{big}"}}'.encode()), headers={**h, "Content-Type": "application/json"})
+    assert r.status_code == 413
+
 
 async def test_headers_no_cors_no_docs(client):
     r = await client.get("/api/health")

@@ -123,8 +123,6 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         cl = request.headers.get("content-length")
         if cl and cl.isdigit() and int(cl) > MAX_BODY:
             return JSONResponse({"detail": "Слишком большой запрос"}, status_code=413)
-        if request.method in ("POST", "PUT", "PATCH") and not cl and request.headers.get("transfer-encoding"):
-            return JSONResponse({"detail": "Нужен заголовок Content-Length"}, status_code=411)
         resp = await call_next(request)
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         resp.headers.setdefault("Referrer-Policy", "no-referrer")
@@ -133,3 +131,37 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if request.url.path.startswith("/api/"):
             resp.headers.setdefault("Cache-Control", "no-store")
         return resp
+
+
+class BodyLimitMiddleware:
+    """Ограничение размера тела и без Content-Length: туннель Cloudflare пересылает запросы частями (chunked).
+
+    При превышении сразу отвечаем 413, а приложению сообщаем, что клиент отключился: FastAPI иначе
+    превратил бы ошибку чтения тела в 400.
+    """
+
+    def __init__(self, app, max_body: int = MAX_BODY):
+        self.app, self.max_body = app, max_body
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        state = {"total": 0, "rejected": False}
+
+        async def limited():
+            if state["rejected"]:
+                return {"type": "http.disconnect"}
+            msg = await receive()
+            if msg["type"] == "http.request":
+                state["total"] += len(msg.get("body", b""))
+                if state["total"] > self.max_body:
+                    state["rejected"] = True
+                    await JSONResponse({"detail": "Слишком большой запрос"}, status_code=413)(scope, receive, send)
+                    return {"type": "http.disconnect"}
+            return msg
+
+        async def guarded_send(msg):
+            if not state["rejected"]:
+                await send(msg)
+
+        await self.app(scope, limited, guarded_send)

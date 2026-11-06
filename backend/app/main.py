@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api import ai, auth, clients, finance, integrations, me, monitoring, programs
 from .config import get_settings
-from .security import SecurityMiddleware, setup_logging
+from .security import BodyLimitMiddleware, SecurityMiddleware, setup_logging
 
 setup_logging()
 _docs = get_settings().api_docs
@@ -14,6 +14,7 @@ app = FastAPI(title="Клиентский радар", version="0.6.0", docs_url
               openapi_url="/api/openapi.json" if _docs else None)
 # CORS не включаем намеренно: кабинет и API на одном адресе, чужие сайты не получат ответов
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(BodyLimitMiddleware)
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(me.router, prefix="/api/v1", tags=["me"])
 app.include_router(integrations.router, prefix="/api/v1", tags=["integrations"])
