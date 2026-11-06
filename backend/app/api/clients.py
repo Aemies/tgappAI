@@ -42,6 +42,8 @@ class ClientOut(BaseModel):
 class ClientCard(ClientOut):
     summary: dict | None = None
     fetched_at: datetime | None = None
+    last_checked_at: datetime | None = None
+    last_check_error: str | None = None
 
 
 def _out(item: PortfolioItem, profile: CompanyProfile | None, card: bool = False):
@@ -50,7 +52,8 @@ def _out(item: PortfolioItem, profile: CompanyProfile | None, card: bool = False
                 fetch_status=item.fetch_status, fetch_error=item.fetch_error, name=s.get("name"), status=s.get("status"),
                 region=s.get("region"), created_at=item.created_at)
     if card:
-        return ClientCard(**base, summary=s or None, fetched_at=profile.fetched_at if profile else None)
+        return ClientCard(**base, summary=s or None, fetched_at=profile.fetched_at if profile else None,
+                          last_checked_at=item.last_checked_at, last_check_error=item.last_check_error)
     return ClientOut(**base)
 
 
@@ -163,9 +166,12 @@ async def refresh_client(item_id: int, user: User = Depends(current_user), db: A
 @router.delete("/clients/{item_id}")
 async def delete_client(item_id: int, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     item = await _own_item(db, user, item_id)
-    profile = await _profile(db, item)
-    if profile:
-        await db.delete(profile)
+    from sqlalchemy import delete
+
+    from ..models import MonitorSnapshot, RegistryEvent
+
+    for model in (RegistryEvent, MonitorSnapshot, CompanyProfile):
+        await db.execute(delete(model).where(model.portfolio_item_id == item.id))
     await db.delete(item)
     await db.commit()
     return {"ok": True}

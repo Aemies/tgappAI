@@ -33,9 +33,6 @@ PIDS=()
 cleanup() { echo; echo "Останавливаю…"; kill ${PIDS[@]+"${PIDS[@]}"} 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 
-(cd backend && exec ../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000) >"$LOG/backend.log" 2>&1 &
-PIDS+=($!)
-
 cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:8000 >"$LOG/tunnel.log" 2>&1 &
 PIDS+=($!)
 URL=""
@@ -52,6 +49,10 @@ for _ in $(seq 1 60); do
 done
 grep -q "Registered tunnel connection" "$LOG/tunnel.log" || { echo "Туннель не подключился за минуту, см. $LOG/tunnel.log"; exit 1; }
 
+(cd backend && exec ../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000) >"$LOG/backend.log" 2>&1 &
+PIDS+=($!)
+(cd backend && exec ../.venv/bin/python -m app.worker) >"$LOG/worker.log" 2>&1 &
+PIDS+=($!)
 (cd bot && exec ../.venv/bin/python -m radar_bot) >"$LOG/bot.log" 2>&1 &
 PIDS+=($!)
 

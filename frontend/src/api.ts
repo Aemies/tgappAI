@@ -1,6 +1,6 @@
 import { tg } from "./telegram";
 
-export type User = { id: number; first_name: string | null; username: string | null; timezone: string; accepted_terms_at: string | null };
+export type User = { id: number; first_name: string | null; username: string | null; timezone: string; accepted_terms_at: string | null; notifications_enabled: boolean };
 export type Overview = { clients: number; checked_today: number; new_events: number; errors: number };
 
 let token: string | null = null;
@@ -24,11 +24,11 @@ export async function login(): Promise<User> {
 }
 
 export const getOverview = () => call<Overview>("/overview");
-export const saveSettings = (body: { timezone?: string; accept_terms?: boolean }) => call<User>("/settings", { method: "PUT", body: JSON.stringify(body) });
+export const saveSettings = (body: { timezone?: string; accept_terms?: boolean; notifications_enabled?: boolean }) => call<User>("/settings", { method: "PUT", body: JSON.stringify(body) });
 
 export type Credential = { connected: boolean; key_mask?: string | null; status?: string | null; last_tested_at?: string | null; last_error?: string | null; requests_today?: number | null };
 export type Client = { id: number; inn: string; subject_type: string; label: string | null; fetch_status: string; fetch_error: string | null; name: string | null; status: string | null; region: string | null };
-export type Card = Client & { summary: Record<string, string | number | null> | null; fetched_at: string | null };
+export type Card = Client & { summary: Record<string, string | number | null> | null; fetched_at: string | null; last_checked_at: string | null; last_check_error: string | null };
 
 export const getChecko = () => call<Credential>("/integrations/checko");
 export const saveChecko = (api_key: string) => call<Credential>("/integrations/checko", { method: "POST", body: JSON.stringify({ api_key }) });
@@ -41,3 +41,11 @@ export const importClients = (text: string) => call<{ added: number; duplicates:
 export const getClient = (id: number) => call<Card>(`/clients/${id}`);
 export const refreshClient = (id: number) => call<Card>(`/clients/${id}/refresh`, { method: "POST" });
 export const deleteClient = (id: number) => call<{ ok: boolean }>(`/clients/${id}`, { method: "DELETE" });
+
+export type Run = { id: number; started_at: string; finished_at: string | null; trigger: string; checked: number; errors: number; skipped_quota: number; new_events: number; requests_used: number };
+export type Event = { id: number; client_id: number; inn: string; company: string | null; event_type: string; title: string; effective_date: string | null; detected_at: string; read: boolean };
+
+export const runMonitoring = () => call<{ started: boolean; running: boolean }>("/monitoring/run", { method: "POST" });
+export const monitoringStatus = () => call<{ running: boolean; last_run: Run | null }>("/monitoring/status");
+export const listEvents = (unread = false) => call<Event[]>(`/events${unread ? "?unread=true" : ""}`);
+export const markRead = (ids?: number[]) => call<{ ok: boolean }>("/events/read", { method: "POST", body: JSON.stringify(ids ?? null) });

@@ -29,6 +29,16 @@ services:
     depends_on:
       db: {condition: service_healthy}
 
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    command: ["python", "-m", "app.worker"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-radar}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-radar}
+    depends_on:
+      backend: {condition: service_started}
+
   bot:
     build: ./bot
     restart: unless-stopped

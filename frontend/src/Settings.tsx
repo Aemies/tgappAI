@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { deleteChecko, getChecko, saveChecko, testChecko, type Credential, type User } from "./api";
+import { deleteChecko, getChecko, saveChecko, saveSettings, testChecko, type Credential, type User } from "./api";
 
 const STATUS: Record<string, string> = { ok: "работает", invalid: "ключ не принят", error: "ошибка проверки", untested: "не проверен" };
 
-export function Settings({ user }: { user: User }) {
+export function Settings({ user, onUser }: { user: User; onUser: (u: User) => void }) {
   const [cred, setCred] = useState<Credential | null>(null);
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,6 +44,11 @@ export function Settings({ user }: { user: User }) {
       <section className="card">
         <h2>Профиль</h2>
         <p className="small">Часовой пояс: {user.timezone}</p>
+        <label className="row small">
+          <input type="checkbox" style={{ width: "auto", margin: 0 }} checked={user.notifications_enabled}
+            onChange={(e) => saveSettings({ notifications_enabled: e.target.checked }).then(onUser).catch((er: Error) => setErr(er.message))} />
+          Присылать уведомления о событиях в Telegram
+        </label>
         <p className="muted small">Раздел «Мой ИИ» появится на этапе финансового анализа.</p>
       </section>
     </>

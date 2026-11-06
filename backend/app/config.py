@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     # Мастер-ключ шифрования пользовательских ключей (base64, 32 байта)
     encryption_master_key: str = ""
     checko_base_url: str = "https://api.checko.ru/v2"
+    # Дневной лимит запросов Checko (бесплатный тариф 100) и запас на ручные действия
+    checko_daily_limit: int = 100
+    checko_reserve: int = 5
+    # Час ежедневной проверки по часовому поясу пользователя
+    monitor_hour: int = 9
+    telegram_api_base: str = "https://api.telegram.org"
+    webapp_url: str = ""
 
 
 @lru_cache

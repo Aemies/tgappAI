@@ -17,6 +17,7 @@ class User(Base):
     timezone: Mapped[str] = mapped_column(String(64), default="Europe/Moscow")
     status: Mapped[str] = mapped_column(String(16), default="active")
     accepted_terms_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -53,6 +54,8 @@ class PortfolioItem(Base):
     monitoring_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     fetch_status: Mapped[str] = mapped_column(String(16), default="pending")  # pending | ok | not_found | error
     fetch_error: Mapped[str | None] = mapped_column(String(255))
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_check_error: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -68,3 +71,61 @@ class CompanyProfile(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     source: Mapped[str] = mapped_column(String(32), default="checko")
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MonitorSnapshot(Base):
+    """Нормализованный снимок карточки на момент проверки."""
+
+    __tablename__ = "monitor_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    portfolio_item_id: Mapped[int] = mapped_column(ForeignKey("portfolio_items.id", ondelete="CASCADE"), index=True)
+    provider: Mapped[str] = mapped_column(String(32), default="checko")
+    snapshot_hash: Mapped[str] = mapped_column(String(64))
+    normalized_payload: Mapped[dict] = mapped_column(JSON)
+    timeline_last_date: Mapped[str | None] = mapped_column(String(10))
+    is_baseline: Mapped[bool] = mapped_column(Boolean, default=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RegistryEvent(Base):
+    """Подтверждённое изменение. event_key уникален в рамках клиента: одно событие приходит один раз."""
+
+    __tablename__ = "registry_events"
+    __table_args__ = (UniqueConstraint("portfolio_item_id", "event_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    portfolio_item_id: Mapped[int] = mapped_column(ForeignKey("portfolio_items.id", ondelete="CASCADE"), index=True)
+    event_key: Mapped[str] = mapped_column(String(64))
+    event_type: Mapped[str] = mapped_column(String(32))  # REGISTRY_CHANGE | NEW_RELATED_ENTITY
+    title: Mapped[str] = mapped_column(String(500))
+    details: Mapped[dict] = mapped_column(JSON)
+    related_ogrn: Mapped[str | None] = mapped_column(String(15))
+    effective_date: Mapped[str | None] = mapped_column(String(10))
+    source: Mapped[str] = mapped_column(String(32))  # timeline | snapshot
+    # события, найденные при первой проверке: это история до подключения, в ленту и уведомления не идут
+    is_baseline: Mapped[bool] = mapped_column(Boolean, default=False)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notify_attempts: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class MonitorRun(Base):
+    """Журнал проверок: когда, сколько клиентов, сколько ошибок и запросов."""
+
+    __tablename__ = "monitor_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    local_date: Mapped[str] = mapped_column(String(10))
+    trigger: Mapped[str] = mapped_column(String(16))  # schedule | manual
+    checked: Mapped[int] = mapped_column(Integer, default=0)
+    errors: Mapped[int] = mapped_column(Integer, default=0)
+    skipped_quota: Mapped[int] = mapped_column(Integer, default=0)
+    new_events: Mapped[int] = mapped_column(Integer, default=0)
+    requests_used: Mapped[int] = mapped_column(Integer, default=0)

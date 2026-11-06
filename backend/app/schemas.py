@@ -15,6 +15,7 @@ class UserOut(BaseModel):
     username: str | None
     timezone: str
     accepted_terms_at: datetime | None
+    notifications_enabled: bool = True
     created_at: datetime
 
 
@@ -26,3 +27,4 @@ class AuthResponse(BaseModel):
 class SettingsIn(BaseModel):
     timezone: str | None = Field(default=None, max_length=64)
     accept_terms: bool | None = None
+    notifications_enabled: bool | None = None

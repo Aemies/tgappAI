@@ -23,6 +23,8 @@ async def update_settings(body: SettingsIn, user: User = Depends(current_user), 
         if body.timezone not in available_timezones():
             raise HTTPException(422, "Неизвестный часовой пояс")
         user.timezone = body.timezone
+    if body.notifications_enabled is not None:
+        user.notifications_enabled = body.notifications_enabled
     if body.accept_terms and user.accepted_terms_at is None:
         user.accepted_terms_at = datetime.now(UTC)
     await db.commit()
@@ -33,6 +35,14 @@ async def update_settings(body: SettingsIn, user: User = Depends(current_user), 
 @router.get("/overview")
 async def overview(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
     """Сводка для вкладки «Обзор». Проверки и события появятся на этапе мониторинга."""
+    from sqlalchemy import select
+
+    from ..models import PortfolioItem
+    from ..monitoring import local_date, unread_count
     from .clients import portfolio_count
 
-    return {"clients": await portfolio_count(db, user), "checked_today": 0, "new_events": 0, "errors": 0}
+    items = (await db.execute(select(PortfolioItem.last_checked_at, PortfolioItem.last_check_error).where(PortfolioItem.owner_user_id == user.id))).all()
+    today = local_date(user)
+    checked = sum(1 for t, _ in items if t and local_date(user, t) == today)
+    errors = sum(1 for t, e in items if e)
+    return {"clients": await portfolio_count(db, user), "checked_today": checked, "new_events": await unread_count(db, user), "errors": errors}

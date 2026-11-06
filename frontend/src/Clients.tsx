@@ -102,6 +102,7 @@ function CardView({ card, onBack, onChange, onError }: { card: Card; onBack: () 
           ))}
         </dl>
       )}
+      <p className="muted small">{card.last_checked_at ? `Мониторинг: проверено ${new Date(card.last_checked_at).toLocaleString("ru-RU")}` : "Мониторинг: ещё не проверялся"}{card.last_check_error ? ` · ошибка: ${card.last_check_error}` : ""}</p>
       {card.summary && <p className="muted small">Источник: Checko{s.source_date ? `, выписка от ${s.source_date}` : ""}. Загружено {card.fetched_at ? new Date(card.fetched_at).toLocaleString("ru-RU") : "—"}.</p>}
       <div className="row">
         <button className="secondary" disabled={busy} onClick={() => { setBusy(true); refreshClient(card.id).then(onChange).catch(onError).finally(() => setBusy(false)); }}>

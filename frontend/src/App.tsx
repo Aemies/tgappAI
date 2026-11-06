@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getOverview, login, saveSettings, type Overview, type User } from "./api";
+import { getOverview, login, monitoringStatus, runMonitoring, saveSettings, type Overview, type Run, type User } from "./api";
 import { Clients } from "./Clients";
+import { Events } from "./Events";
 import { Settings } from "./Settings";
 
 const TABS = [
@@ -12,8 +13,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"] | "settings";
 
-const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients">, string> = {
-  events: "Здесь появятся изменения в ЕГРЮЛ и новые связанные компании по вашим клиентам.",
+const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients" | "events">, string> = {
   programs: "Здесь будут подходящие госпрограммы и причины подбора.",
   finance: "Здесь будут выручка, прибыль, долг и выводы по отчётности.",
 };
@@ -23,6 +23,32 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [running, setRunning] = useState(false);
+  const [lastRun, setLastRun] = useState<Run | null>(null);
+  const [runErr, setRunErr] = useState<string | null>(null);
+
+  const refreshOverview = () => getOverview().then(setOverview).catch(() => {});
+
+  useEffect(() => {
+    if (!user) return;
+    monitoringStatus().then((s) => { setRunning(s.running); setLastRun(s.last_run); }).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => {
+      monitoringStatus().then((s) => {
+        setLastRun(s.last_run);
+        if (!s.running) { setRunning(false); refreshOverview(); }
+      }).catch(() => {});
+    }, 3000);
+    return () => clearInterval(t);
+  }, [running]);
+
+  const startRun = () => {
+    setRunErr(null);
+    runMonitoring().then(() => setRunning(true)).catch((e: Error) => { setRunErr(e.message); if (e.message.includes("ключ Checko")) setTab("settings"); });
+  };
 
   useEffect(() => {
     if (user && tab === "overview") getOverview().then(setOverview).catch(() => {});
@@ -66,11 +92,24 @@ export function App() {
               <Stat label="Новых событий" value={overview?.new_events} />
               <Stat label="Ошибок" value={overview?.errors} />
             </div>
-            {overview?.clients === 0 && <button className="primary" onClick={() => setTab("clients")}>Добавить ИНН</button>}
+            {overview?.clients === 0 ? (
+              <button className="primary" onClick={() => setTab("clients")}>Добавить ИНН</button>
+            ) : (
+              <button className="primary" disabled={running} onClick={startRun}>{running ? "Проверяем…" : "Запустить проверку"}</button>
+            )}
+            {runErr && <p className="bad small">{runErr}</p>}
+            {lastRun && (
+              <p className="muted small">
+                Последняя проверка: {new Date(lastRun.started_at).toLocaleString("ru-RU")}{lastRun.finished_at ? `, клиентов ${lastRun.checked}, новых событий ${lastRun.new_events}, запросов ${lastRun.requests_used}` : ", идёт…"}
+                {lastRun.skipped_quota ? `. Не хватило дневного лимита Checko на ${lastRun.skipped_quota}, они проверятся завтра первыми.` : ""}
+              </p>
+            )}
+            <p className="muted small">Автоматическая проверка каждый день в 09:00. Первая проверка только запоминает текущее состояние.</p>
           </>
         )}
-        {tab === "settings" && <Settings user={user} />}
+        {tab === "settings" && <Settings user={user} onUser={setUser} />}
         {tab === "clients" && <Clients onNeedKey={() => setTab("settings")} />}
+        {tab === "events" && <Events onChanged={refreshOverview} />}
         {tab in EMPTY && (
           <>
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>

@@ -40,3 +40,5 @@ button:disabled { opacity: .5; }
 .list li { padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); cursor: pointer; }
 .list .name { font-weight: 500; }
 .fields div { padding: 6px 0; } .fields dt { color: var(--hint); font-size: 12px; } .fields dd { margin: 0; }
+button.secondary.on { background: var(--accent); color: var(--accent-text); }
+.list li.unread .name::before { content: "● "; color: var(--accent); }
