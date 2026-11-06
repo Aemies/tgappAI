@@ -12,6 +12,7 @@ from ..checko import CheckoError
 from ..db import get_db
 from ..finance import analyze
 from ..models import AIUsageEvent, FinanceReport, User
+from ..security import limit
 from ..session import current_user
 from . import ai as ai_api
 from .clients import _own_item, _profile
@@ -41,7 +42,7 @@ async def get_finance(item_id: int, user: User = Depends(current_user), db: Asyn
 
 
 @router.post("/clients/{item_id}/finance/refresh")
-async def refresh_finance(item_id: int, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def refresh_finance(item_id: int, user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     item = await _own_item(db, user, item_id)
     if item.subject_type != "company":
         return {"loaded": True, **analyze(None, item.subject_type)}
@@ -67,7 +68,7 @@ class AIIn(BaseModel):
 
 
 @router.post("/clients/{item_id}/finance/ai")
-async def explain_finance(item_id: int, body: AIIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def explain_finance(item_id: int, body: AIIn, user: User = Depends(limit("ai")), db: AsyncSession = Depends(get_db)):
     item = await _own_item(db, user, item_id)
     rep = await _report(db, item.id)
     report = analyze((rep.payload or {}).get("data") if rep else None, item.subject_type)

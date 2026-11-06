@@ -93,7 +93,7 @@ async def test_add_and_card(client, setup):
 async def test_import(client):
     h = await login(client, 1)
     r = (await client.post("/api/v1/clients/import", json={"text": f"inn\n{SBER}\n{YANDEX};{SBER}\n7707083894"}, headers=h)).json()
-    assert r == {"added": 2, "duplicates": 0, "invalid": ["7707083894"]}
+    assert r == {"added": 2, "duplicates": 1, "invalid": ["7707083894"]}
     r = (await client.post("/api/v1/clients/import", json={"text": f"{SBER} {YANDEX}"}, headers=h)).json()
     assert r["added"] == 0 and r["duplicates"] == 2
     items = (await client.get("/api/v1/clients", headers=h)).json()

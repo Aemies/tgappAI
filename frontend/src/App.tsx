@@ -3,6 +3,7 @@ import { getOverview, login, monitoringStatus, runMonitoring, saveSettings, type
 import { Clients } from "./Clients";
 import { Events } from "./Events";
 import { Finance } from "./Finance";
+import { Legal } from "./Legal";
 import { Programs } from "./Programs";
 import { Settings } from "./Settings";
 
@@ -69,6 +70,7 @@ export function App() {
         <h1>Добро пожаловать{user.first_name ? `, ${user.first_name}` : ""}</h1>
         <p>«Клиентский радар» помогает готовить гипотезы и вопросы клиенту. Это не скоринг и не официальное подтверждение права на господдержку.</p>
         <p className="muted">Ваш портфель и ключи видите только вы.</p>
+        <details className="card"><summary>Условия и политика конфиденциальности</summary><Legal /></details>
         <button className="primary" onClick={() => saveSettings({ accept_terms: true }).then(setUser).catch((e: Error) => setError(e.message))}>
           Принимаю условия
         </button>

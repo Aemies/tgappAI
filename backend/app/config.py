@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     monitor_hour: int = 9
     telegram_api_base: str = "https://api.telegram.org"
     webapp_url: str = ""
+    # Swagger-документация API (/api/docs). В пилоте выключена
+    api_docs: bool = False
+    # Папка резервных копий SQLite и сколько дней их хранить
+    backup_dir: str = ""
+    backup_keep: int = 7
     # Корневой сертификат Минцифры (PEM): нужен только для GigaChat API
     gigachat_ca_file: str = ""
 

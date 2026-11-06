@@ -9,6 +9,7 @@ from .. import crypto
 from ..checko import CheckoClient, CheckoError
 from ..db import get_db
 from ..models import ProviderCredential, User
+from ..security import limit
 from ..session import current_user
 
 router = APIRouter()
@@ -70,7 +71,7 @@ async def get_checko(user: User = Depends(current_user), db: AsyncSession = Depe
 
 
 @router.post("/integrations/checko", response_model=CredentialOut)
-async def save_checko(body: KeyIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def save_checko(body: KeyIn, user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     key = body.api_key.strip()
     try:
         secret = crypto.encrypt(key, _aad(user.id))
@@ -89,7 +90,7 @@ async def save_checko(body: KeyIn, user: User = Depends(current_user), db: Async
 
 
 @router.post("/integrations/checko/test", response_model=CredentialOut)
-async def test_checko(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def test_checko(user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     cred = await get_credential(db, user)
     if cred is None:
         raise HTTPException(404, "Ключ не подключён")

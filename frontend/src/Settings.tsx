@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Legal } from "./Legal";
+import { tg } from "./telegram";
 import { MyAI } from "./MyAI";
-import { deleteChecko, getChecko, saveChecko, saveSettings, testChecko, type Credential, type User } from "./api";
+import { deleteChecko, deleteMe, getChecko, saveChecko, saveSettings, testChecko, type Credential, type User } from "./api";
 
 const STATUS: Record<string, string> = { ok: "работает", invalid: "ключ не принят", error: "ошибка проверки", untested: "не проверен" };
 
@@ -51,6 +53,17 @@ export function Settings({ user, onUser }: { user: User; onUser: (u: User) => vo
             onChange={(e) => saveSettings({ notifications_enabled: e.target.checked }).then(onUser).catch((er: Error) => setErr(er.message))} />
           Присылать уведомления о событиях в Telegram
         </label>
+      </section>
+      <section className="card">
+        <details><summary>Условия и политика конфиденциальности</summary><Legal /></details>
+      </section>
+      <section className="card">
+        <h2>Мои данные</h2>
+        <p className="muted small">Удалит портфель, карточки, события, отчётность, ключи Checko и ИИ. Отменить нельзя.</p>
+        <button className="secondary danger" onClick={() => {
+          if (!confirm("Удалить все ваши данные из «Клиентского радара»? Отменить нельзя.")) return;
+          deleteMe().then(() => { alert("Данные удалены. Кабинет закроется."); tg?.close?.(); location.reload(); }).catch((er: Error) => setErr(er.message));
+        }}>Удалить мои данные</button>
       </section>
     </>
   );

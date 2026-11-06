@@ -5,12 +5,26 @@
 import asyncio
 import logging
 import os
+import re
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command, CommandStart
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonWebApp, Message, WebAppInfo
 
 log = logging.getLogger("radar_bot")
+_TOKEN_RE = re.compile(r"\d{6,}:[\w-]{30,}")
+
+
+class _Redact(logging.Filter):
+    """Токен бота не должен попасть в лог даже внутри текста ошибки."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if _TOKEN_RE.search(msg):
+            record.msg, record.args = _TOKEN_RE.sub("***", msg), None
+        if record.exc_info and not record.exc_text:
+            record.exc_text = _TOKEN_RE.sub("***", logging.Formatter().formatException(record.exc_info))
+        return True
 
 WELCOME = (
     "Привет! Я «Клиентский радар».\n\n"
@@ -48,6 +62,8 @@ def build_dispatcher(webapp_url: str) -> Dispatcher:
 
 async def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    for h in logging.getLogger().handlers:
+        h.addFilter(_Redact())
     token = os.environ["TELEGRAM_BOT_TOKEN"]
     webapp_url = os.environ.get("WEBAPP_URL", "").strip()
     if webapp_url and not webapp_url.startswith("https://"):

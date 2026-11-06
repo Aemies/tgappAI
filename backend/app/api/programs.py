@@ -7,6 +7,7 @@ from ..checko import CheckoError
 from ..db import get_db
 from ..models import User
 from ..programs import facts_from_checko, load_catalog, match_all
+from ..security import limit
 from ..session import current_user
 from .clients import _own_item, _profile
 from .integrations import checko_for
@@ -26,7 +27,7 @@ async def catalog(user: User = Depends(current_user)):
 
 
 @router.post("/programs/check")
-async def check(body: CheckIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def check(body: CheckIn, user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     if body.client_id:
         item = await _own_item(db, user, body.client_id)
         profile = await _profile(db, item)

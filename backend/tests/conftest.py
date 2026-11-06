@@ -13,6 +13,9 @@ from app.main import app  # noqa: E402
 
 @pytest.fixture
 async def client():
+    from app.security import limiter
+
+    limiter.reset()
     sm = dbmod.get_sessionmaker()
     engine = sm.kw["bind"]
     async with engine.begin() as conn:

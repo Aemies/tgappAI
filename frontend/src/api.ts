@@ -23,6 +23,7 @@ export async function login(): Promise<User> {
   return r.user;
 }
 
+export const deleteMe = () => call<{ ok: boolean }>("/me", { method: "DELETE" });
 export const getOverview = () => call<Overview>("/overview");
 export const saveSettings = (body: { timezone?: string; accept_terms?: boolean; notifications_enabled?: boolean }) => call<User>("/settings", { method: "PUT", body: JSON.stringify(body) });
 

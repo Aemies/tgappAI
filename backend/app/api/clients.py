@@ -9,6 +9,7 @@ from .. import inn as innlib
 from ..checko import CheckoError, summarize
 from ..db import get_db
 from ..models import CompanyProfile, PortfolioItem, User
+from ..security import limit
 from ..session import current_user
 from .integrations import checko_for
 
@@ -112,7 +113,7 @@ async def list_clients(q: str | None = None, user: User = Depends(current_user),
 
 
 @router.post("/clients", response_model=ClientCard)
-async def add_client(body: AddIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def add_client(body: AddIn, user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     inn, kind = _parse(body.inn)
     await checko_for(db, user)  # без ключа не добавляем: карточку нечем проверить
     exists = (await db.execute(select(PortfolioItem).where(PortfolioItem.owner_user_id == user.id, PortfolioItem.inn == inn))).scalar_one_or_none()
@@ -126,15 +127,16 @@ async def add_client(body: AddIn, user: User = Depends(current_user), db: AsyncS
 
 
 @router.post("/clients/import")
-async def import_clients(body: ImportIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def import_clients(body: ImportIn, user: User = Depends(limit("import")), db: AsyncSession = Depends(get_db)):
     """Массовая загрузка: ИНН через запятую, пробел, перенос строки или из CSV. Карточки подгружаются позже по кнопке."""
     import re
 
     tokens = re.findall(r"(?<!\d)\d{9,13}(?!\d)", body.text)
-    seen, valid, invalid = set(), [], []
+    seen, valid, invalid, repeats = set(), [], [], 0
     for t in tokens:
         inn = innlib.normalize(t)
         if inn in seen:
+            repeats += 1  # повтор внутри самого списка тоже дубль
             continue
         seen.add(inn)
         kind = innlib.validate(inn)
@@ -147,7 +149,7 @@ async def import_clients(body: ImportIn, user: User = Depends(current_user), db:
         if inn not in existing:
             db.add(PortfolioItem(owner_user_id=user.id, inn=inn, subject_type=kind))
     await db.commit()
-    return {"added": len(added), "duplicates": len(valid) - len(added), "invalid": [i for i, _ in invalid]}
+    return {"added": len(added), "duplicates": len(valid) - len(added) + repeats, "invalid": [i for i, _ in invalid]}
 
 
 @router.get("/clients/{item_id}", response_model=ClientCard)
@@ -157,7 +159,7 @@ async def get_client(item_id: int, user: User = Depends(current_user), db: Async
 
 
 @router.post("/clients/{item_id}/refresh", response_model=ClientCard)
-async def refresh_client(item_id: int, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def refresh_client(item_id: int, user: User = Depends(limit("checko")), db: AsyncSession = Depends(get_db)):
     item = await _own_item(db, user, item_id)
     profile = await _fetch(db, user, item)
     return _out(item, profile, card=True)

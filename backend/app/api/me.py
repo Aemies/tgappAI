@@ -46,3 +46,22 @@ async def overview(user: User = Depends(current_user), db: AsyncSession = Depend
     checked = sum(1 for t, _ in items if t and local_date(user, t) == today)
     errors = sum(1 for t, e in items if e)
     return {"clients": await portfolio_count(db, user), "checked_today": checked, "new_events": await unread_count(db, user), "errors": errors}
+
+
+@router.delete("/me")
+async def delete_me(user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+    """«Удалить мои данные»: портфель, карточки, события, ключи Checko и ИИ, журналы — всё, что связано с пользователем.
+
+    Удаляем явно по owner_user_id, не полагаясь на каскад: в SQLite внешние ключи по умолчанию не проверяются.
+    """
+    from sqlalchemy import delete
+
+    from ..models import (AIConnection, AIUsageEvent, CompanyProfile, FinanceReport, MonitorRun, MonitorSnapshot, PortfolioItem,
+                          ProviderCredential, RegistryEvent)
+
+    for model in (AIUsageEvent, AIConnection, RegistryEvent, MonitorSnapshot, MonitorRun, FinanceReport, CompanyProfile, PortfolioItem,
+                  ProviderCredential):
+        await db.execute(delete(model).where(model.owner_user_id == user.id))
+    await db.delete(user)
+    await db.commit()
+    return {"ok": True, "deleted": True}

@@ -66,3 +66,5 @@ table.fin { width: 100%; border-collapse: collapse; }
 table.fin th, table.fin td { padding: 5px 4px; text-align: right; white-space: nowrap; border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); }
 table.fin td:first-child, table.fin th:first-child { text-align: left; white-space: normal; }
 .conn { border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); padding: 8px 0 4px; margin-bottom: 8px; }
+.legal ol { padding-left: 18px; } .legal li { margin: 4px 0; }
+details summary { cursor: pointer; color: var(--accent); }

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .. import ai, crypto
 from ..db import get_db
 from ..models import AIConnection, AIUsageEvent, User
+from ..security import limit
 from ..session import current_user
 
 router = APIRouter()
@@ -111,7 +112,7 @@ async def list_connections(user: User = Depends(current_user), db: AsyncSession 
 
 
 @router.post("/ai/connections")
-async def create_connection(body: ConnIn, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def create_connection(body: ConnIn, user: User = Depends(limit("ai")), db: AsyncSession = Depends(get_db)):
     p = ai.PROVIDERS.get(body.provider)
     if p is None:
         raise HTTPException(422, "Провайдер не поддерживается")
@@ -143,7 +144,7 @@ async def create_connection(body: ConnIn, user: User = Depends(current_user), db
 
 
 @router.post("/ai/connections/{conn_id}/test")
-async def test_connection(conn_id: int, user: User = Depends(current_user), db: AsyncSession = Depends(get_db)):
+async def test_connection(conn_id: int, user: User = Depends(limit("ai")), db: AsyncSession = Depends(get_db)):
     c = await _own(db, user, conn_id)
     await _test(db, user, c)
     return await _out(db, c)

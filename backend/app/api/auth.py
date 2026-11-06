@@ -8,6 +8,7 @@ from ..config import Settings, get_settings
 from ..db import get_db
 from ..models import User
 from ..schemas import AuthRequest, AuthResponse, UserOut
+from ..security import limit_ip
 from ..session import issue_token
 from ..telegram_auth import InitDataError, validate_init_data
 
@@ -15,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/auth/telegram", response_model=AuthResponse)
-async def auth_telegram(body: AuthRequest, db: AsyncSession = Depends(get_db), settings: Settings = Depends(get_settings)):
+async def auth_telegram(body: AuthRequest, _: None = Depends(limit_ip("auth")), db: AsyncSession = Depends(get_db), settings: Settings = Depends(get_settings)):
     try:
         tg = validate_init_data(body.init_data, settings.telegram_bot_token, settings.init_data_max_age)
     except InitDataError:
