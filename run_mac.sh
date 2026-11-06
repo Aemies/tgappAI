@@ -36,7 +36,7 @@ trap cleanup EXIT INT TERM
 (cd backend && exec ../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000) >"$LOG/backend.log" 2>&1 &
 PIDS+=($!)
 
-cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8000 >"$LOG/tunnel.log" 2>&1 &
+cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:8000 >"$LOG/tunnel.log" 2>&1 &
 PIDS+=($!)
 URL=""
 for _ in $(seq 1 30); do
