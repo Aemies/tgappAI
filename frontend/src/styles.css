@@ -42,3 +42,11 @@ button:disabled { opacity: .5; }
 .fields div { padding: 6px 0; } .fields dt { color: var(--hint); font-size: 12px; } .fields dd { margin: 0; }
 button.secondary.on { background: var(--accent); color: var(--accent-text); }
 .list li.unread .name::before { content: "● "; color: var(--accent); }
+select { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--hint) 40%, transparent); background: var(--bg); color: var(--text); }
+.warn { color: #c77700; }
+.program .name { font-weight: 600; margin: 2px 0; }
+.checks { list-style: none; padding: 0; margin: 8px 0; font-size: 14px; }
+.checks li { padding: 2px 0; }
+.checks li span { display: inline-block; width: 16px; font-weight: 700; }
+.checks li.pass span { color: #2a9d55; } .checks li.fail span { color: #d33; } .checks li.unknown span, .checks li.ask span { color: #c77700; }
+a { color: var(--accent); }

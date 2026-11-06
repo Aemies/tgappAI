@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getOverview, login, monitoringStatus, runMonitoring, saveSettings, type Overview, type Run, type User } from "./api";
 import { Clients } from "./Clients";
 import { Events } from "./Events";
+import { Programs } from "./Programs";
 import { Settings } from "./Settings";
 
 const TABS = [
@@ -13,8 +14,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"] | "settings";
 
-const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients" | "events">, string> = {
-  programs: "Здесь будут подходящие госпрограммы и причины подбора.",
+const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients" | "events" | "programs">, string> = {
   finance: "Здесь будут выручка, прибыль, долг и выводы по отчётности.",
 };
 
@@ -24,6 +24,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [running, setRunning] = useState(false);
+  const [programsFor, setProgramsFor] = useState<number | undefined>(undefined);
   const [lastRun, setLastRun] = useState<Run | null>(null);
   const [runErr, setRunErr] = useState<string | null>(null);
 
@@ -108,8 +109,9 @@ export function App() {
           </>
         )}
         {tab === "settings" && <Settings user={user} onUser={setUser} />}
-        {tab === "clients" && <Clients onNeedKey={() => setTab("settings")} />}
+        {tab === "clients" && <Clients onNeedKey={() => setTab("settings")} onPrograms={(id) => { setProgramsFor(id); setTab("programs"); }} />}
         {tab === "events" && <Events onChanged={refreshOverview} />}
+        {tab === "programs" && <Programs key={programsFor ?? 0} clientId={programsFor} />}
         {tab in EMPTY && (
           <>
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
@@ -119,7 +121,7 @@ export function App() {
       </main>
       <nav>
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => setTab(t.id)}>{t.label}</button>
+          <button key={t.id} className={tab === t.id ? "active" : ""} onClick={() => { if (t.id === "programs") setProgramsFor(undefined); setTab(t.id); }}>{t.label}</button>
         ))}
       </nav>
     </div>

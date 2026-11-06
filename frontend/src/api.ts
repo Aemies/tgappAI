@@ -49,3 +49,9 @@ export const runMonitoring = () => call<{ started: boolean; running: boolean }>(
 export const monitoringStatus = () => call<{ running: boolean; last_run: Run | null }>("/monitoring/status");
 export const listEvents = (unread = false) => call<Event[]>(`/events${unread ? "?unread=true" : ""}`);
 export const markRead = (ids?: number[]) => call<{ ok: boolean }>("/events/read", { method: "POST", body: JSON.stringify(ids ?? null) });
+
+export type ProgramCheck = { result: "pass" | "fail" | "unknown" | "ask"; text: string };
+export type ProgramResult = { program_id: string; title: string; authority: string; official_url: string; verified_at: string; status: string; checks: ProgramCheck[]; summary: Record<string, string>; note: string };
+export type ProgramsResponse = { inn: string; name: string | null; rule_version: string; results: ProgramResult[]; disclaimer: string };
+
+export const checkPrograms = (body: { client_id?: number; inn?: string }) => call<ProgramsResponse>("/programs/check", { method: "POST", body: JSON.stringify(body) });

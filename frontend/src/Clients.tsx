@@ -3,7 +3,7 @@ import { addClient, deleteClient, getClient, importClients, listClients, refresh
 
 const FETCH: Record<string, string> = { pending: "карточка не загружена", not_found: "не найден в реестре", error: "ошибка загрузки" };
 
-export function Clients({ onNeedKey }: { onNeedKey: () => void }) {
+export function Clients({ onNeedKey, onPrograms }: { onNeedKey: () => void; onPrograms: (id: number) => void }) {
   const [items, setItems] = useState<Client[] | null>(null);
   const [inn, setInn] = useState("");
   const [bulk, setBulk] = useState("");
@@ -38,7 +38,7 @@ export function Clients({ onNeedKey }: { onNeedKey: () => void }) {
 
   const readFile = (f: File) => f.text().then((t) => setBulk(t));
 
-  if (card) return <CardView card={card} onBack={() => { setCard(null); reload(); }} onChange={setCard} onError={fail} />;
+  if (card) return <CardView card={card} onBack={() => { setCard(null); reload(); }} onChange={setCard} onError={fail} onPrograms={onPrograms} />;
 
   const shown = (items ?? []).filter((c) => !q || c.inn.includes(q) || (c.name ?? "").toLowerCase().includes(q.toLowerCase()));
 
@@ -86,7 +86,7 @@ const FIELDS: [string, string][] = [
   ["sme_category", "Категория МСП"], ["employees", "Сотрудников"],
 ];
 
-function CardView({ card, onBack, onChange, onError }: { card: Card; onBack: () => void; onChange: (c: Card) => void; onError: (e: Error) => void }) {
+function CardView({ card, onBack, onChange, onError, onPrograms }: { card: Card; onBack: () => void; onChange: (c: Card) => void; onError: (e: Error) => void; onPrograms: (id: number) => void }) {
   const [busy, setBusy] = useState(false);
   const s = card.summary ?? {};
   return (
@@ -104,6 +104,7 @@ function CardView({ card, onBack, onChange, onError }: { card: Card; onBack: () 
       )}
       <p className="muted small">{card.last_checked_at ? `Мониторинг: проверено ${new Date(card.last_checked_at).toLocaleString("ru-RU")}` : "Мониторинг: ещё не проверялся"}{card.last_check_error ? ` · ошибка: ${card.last_check_error}` : ""}</p>
       {card.summary && <p className="muted small">Источник: Checko{s.source_date ? `, выписка от ${s.source_date}` : ""}. Загружено {card.fetched_at ? new Date(card.fetched_at).toLocaleString("ru-RU") : "—"}.</p>}
+      {card.summary && <button className="primary" onClick={() => onPrograms(card.id)}>Подобрать госпрограммы</button>}
       <div className="row">
         <button className="secondary" disabled={busy} onClick={() => { setBusy(true); refreshClient(card.id).then(onChange).catch(onError).finally(() => setBusy(false)); }}>
           {busy ? "Обновляем…" : "Обновить"}
