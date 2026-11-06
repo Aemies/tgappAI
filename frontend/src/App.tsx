@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getOverview, login, monitoringStatus, runMonitoring, saveSettings, type Overview, type Run, type User } from "./api";
 import { Clients } from "./Clients";
 import { Events } from "./Events";
+import { Finance } from "./Finance";
 import { Programs } from "./Programs";
 import { Settings } from "./Settings";
 
@@ -14,9 +15,6 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["id"] | "settings";
 
-const EMPTY: Record<Exclude<Tab, "overview" | "settings" | "clients" | "events" | "programs">, string> = {
-  finance: "Здесь будут выручка, прибыль, долг и выводы по отчётности.",
-};
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -112,12 +110,7 @@ export function App() {
         {tab === "clients" && <Clients onNeedKey={() => setTab("settings")} onPrograms={(id) => { setProgramsFor(id); setTab("programs"); }} />}
         {tab === "events" && <Events onChanged={refreshOverview} />}
         {tab === "programs" && <Programs key={programsFor ?? 0} clientId={programsFor} />}
-        {tab in EMPTY && (
-          <>
-            <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
-            <p className="muted">{EMPTY[tab as keyof typeof EMPTY]}</p>
-          </>
-        )}
+        {tab === "finance" && <Finance onSettings={() => setTab("settings")} />}
       </main>
       <nav>
         {TABS.map((t) => (

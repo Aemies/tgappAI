@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from .api import auth, clients, integrations, me, monitoring, programs
+from .api import ai, auth, clients, finance, integrations, me, monitoring, programs
 from .config import get_settings
 
 app = FastAPI(title="Клиентский радар", version="0.1.0", docs_url="/api/docs", openapi_url="/api/openapi.json")
@@ -13,6 +13,8 @@ app.include_router(integrations.router, prefix="/api/v1", tags=["integrations"])
 app.include_router(clients.router, prefix="/api/v1", tags=["clients"])
 app.include_router(monitoring.router, prefix="/api/v1", tags=["monitoring"])
 app.include_router(programs.router, prefix="/api/v1", tags=["programs"])
+app.include_router(finance.router, prefix="/api/v1", tags=["finance"])
+app.include_router(ai.router, prefix="/api/v1", tags=["ai"])
 
 
 @app.get("/api/health")

@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     monitor_hour: int = 9
     telegram_api_base: str = "https://api.telegram.org"
     webapp_url: str = ""
+    # Корневой сертификат Минцифры (PEM): нужен только для GigaChat API
+    gigachat_ca_file: str = ""
 
 
 @lru_cache

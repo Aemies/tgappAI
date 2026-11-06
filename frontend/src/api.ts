@@ -55,3 +55,31 @@ export type ProgramResult = { program_id: string; title: string; authority: stri
 export type ProgramsResponse = { inn: string; name: string | null; rule_version: string; results: ProgramResult[]; disclaimer: string };
 
 export const checkPrograms = (body: { client_id?: number; inn?: string }) => call<ProgramsResponse>("/programs/check", { method: "POST", body: JSON.stringify(body) });
+
+export type Metric = { value: number | null; note: string | null };
+export type YearReport = { year: string; lines: Record<string, number | null>; metrics: Record<string, Metric> };
+export type Finance = {
+  loaded: boolean; available?: boolean; reason?: string; fetched_at?: string; years?: string[]; unit?: string; method_version?: string;
+  line_labels?: Record<string, string>; formulas?: Record<string, string>; reports?: YearReport[]; summary?: string[]; questions?: string[];
+  flags?: string[]; disclaimer?: string; pdf_links?: Record<string, string>;
+};
+export type AIResult = { summary: string; strengths: string[]; risks: string[]; questions_for_manager: string[]; limitations: string[]; confidence: string | null; removed_count: number };
+export type AIExplain = { connection: { id: number; name: string; provider: string; model_id: string }; data_level: number; sent_package: unknown; result: AIResult; tokens: { input: number | null; output: number | null }; disclaimer: string };
+
+export const getFinance = (id: number) => call<Finance>(`/clients/${id}/finance`);
+export const refreshFinance = (id: number) => call<Finance>(`/clients/${id}/finance/refresh`, { method: "POST" });
+export const explainFinance = (id: number, connection_id?: number) => call<AIExplain>(`/clients/${id}/finance/ai`, { method: "POST", body: JSON.stringify({ connection_id }) });
+
+export type AIProvider = { code: string; title: string; has_model_list: boolean; fixed_models: string[]; needs_folder: boolean; key_hint: string; docs: string; notes: string; oauth_supported: boolean };
+export type AIConnection = {
+  id: number; provider: string; provider_title: string; name: string; model_id: string | null; masked_secret: string; status: string; last_error: string | null;
+  is_default: boolean; data_level: number; monthly_request_limit: number; max_tokens: number; used_this_month: number; models: string[]; folder_id: string | null;
+};
+export const aiProviders = () => call<AIProvider[]>("/ai/providers");
+export const aiConnections = () => call<AIConnection[]>("/ai/connections");
+export const addAIConnection = (body: { provider: string; api_key: string; name?: string; model_id?: string; folder_id?: string }) =>
+  call<AIConnection>("/ai/connections", { method: "POST", body: JSON.stringify(body) });
+export const updateAIConnection = (id: number, body: Partial<Pick<AIConnection, "name" | "model_id" | "is_default" | "data_level" | "monthly_request_limit">>) =>
+  call<AIConnection>(`/ai/connections/${id}`, { method: "PUT", body: JSON.stringify(body) });
+export const testAIConnection = (id: number) => call<AIConnection>(`/ai/connections/${id}/test`, { method: "POST" });
+export const deleteAIConnection = (id: number) => call<{ ok: boolean }>(`/ai/connections/${id}`, { method: "DELETE" });

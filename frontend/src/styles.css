@@ -50,3 +50,19 @@ select { width: 100%; font: inherit; padding: 10px 12px; border-radius: 10px; bo
 .checks li span { display: inline-block; width: 16px; font-weight: 700; }
 .checks li.pass span { color: #2a9d55; } .checks li.fail span { color: #d33; } .checks li.unknown span, .checks li.ask span { color: #c77700; }
 a { color: var(--accent); }
+.tiny { font-size: 12px; }
+.metric { font-size: 18px !important; }
+.stat .link { display: block; }
+.warnbox { background: color-mix(in srgb, #c77700 12%, var(--card)); }
+.warnbox ul, .card ul { margin: 6px 0; padding-left: 20px; }
+.bars { margin-bottom: 10px; }
+.bar-row { display: grid; grid-template-columns: 40px 1fr 92px; gap: 8px; align-items: center; margin: 3px 0; }
+.bar { background: color-mix(in srgb, var(--hint) 15%, transparent); border-radius: 4px; height: 10px; overflow: hidden; }
+.bar div { height: 100%; background: var(--accent); border-radius: 4px; }
+.bar div.neg { background: #d33; }
+.bar-row .num { text-align: right; white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+table.fin { width: 100%; border-collapse: collapse; }
+table.fin th, table.fin td { padding: 5px 4px; text-align: right; white-space: nowrap; border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); }
+table.fin td:first-child, table.fin th:first-child { text-align: left; white-space: normal; }
+.conn { border-bottom: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); padding: 8px 0 4px; margin-bottom: 8px; }

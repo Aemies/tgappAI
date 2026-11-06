@@ -57,6 +57,9 @@ class CheckoClient:
     async def timeline(self, inn: str) -> CheckoResult:
         return await self._get("timeline", inn=inn)
 
+    async def finances(self, inn: str) -> CheckoResult:
+        return await self._get("finances", inn=inn)
+
     async def test(self) -> CheckoResult:
         return await self.company(_TEST_INN)
 

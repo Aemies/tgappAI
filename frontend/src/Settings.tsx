@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MyAI } from "./MyAI";
 import { deleteChecko, getChecko, saveChecko, saveSettings, testChecko, type Credential, type User } from "./api";
 
 const STATUS: Record<string, string> = { ok: "работает", invalid: "ключ не принят", error: "ошибка проверки", untested: "не проверен" };
@@ -41,6 +42,7 @@ export function Settings({ user, onUser }: { user: User; onUser: (u: User) => vo
         <p className="muted small">Проверка ключа тратит 1 запрос из дневного лимита.</p>
         {err && <p className="bad small">{err}</p>}
       </section>
+      <MyAI />
       <section className="card">
         <h2>Профиль</h2>
         <p className="small">Часовой пояс: {user.timezone}</p>
@@ -49,7 +51,6 @@ export function Settings({ user, onUser }: { user: User; onUser: (u: User) => vo
             onChange={(e) => saveSettings({ notifications_enabled: e.target.checked }).then(onUser).catch((er: Error) => setErr(er.message))} />
           Присылать уведомления о событиях в Telegram
         </label>
-        <p className="muted small">Раздел «Мой ИИ» появится на этапе финансового анализа.</p>
       </section>
     </>
   );

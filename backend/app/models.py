@@ -129,3 +129,57 @@ class MonitorRun(Base):
     skipped_quota: Mapped[int] = mapped_column(Integer, default=0)
     new_events: Mapped[int] = mapped_column(Integer, default=0)
     requests_used: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class FinanceReport(Base):
+    """Последняя загруженная бухотчётность клиента (ответ Checko /finances), чтобы не тратить запросы повторно."""
+
+    __tablename__ = "finance_reports"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    portfolio_item_id: Mapped[int] = mapped_column(ForeignKey("portfolio_items.id", ondelete="CASCADE"), unique=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AIConnection(Base):
+    """Личное подключение к ИИ-провайдеру. Ключ — только шифротекст; наружу отдаётся маска."""
+
+    __tablename__ = "ai_connections"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    provider_code: Mapped[str] = mapped_column(String(32))
+    auth_type: Mapped[str] = mapped_column(String(16), default="api_key")
+    name: Mapped[str] = mapped_column(String(100))
+    model_id: Mapped[str | None] = mapped_column(String(200))
+    encrypted_secret: Mapped[str] = mapped_column(Text)
+    key_suffix: Mapped[str] = mapped_column(String(8))
+    settings: Mapped[dict] = mapped_column(JSON, default=dict)  # folder_id, scope, models
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    data_level: Mapped[int] = mapped_column(Integer, default=1)  # 1 — обезличенные показатели, 2 — плюс название и ИНН
+    monthly_request_limit: Mapped[int] = mapped_column(Integer, default=100)
+    max_tokens: Mapped[int] = mapped_column(Integer, default=1500)
+    status: Mapped[str] = mapped_column(String(16), default="untested")  # untested | ok | invalid_key | no_model | rate_limited | unavailable | error
+    last_error: Mapped[str | None] = mapped_column(String(255))
+    last_tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AIUsageEvent(Base):
+    """Журнал вызовов ИИ без содержимого промптов и ответов."""
+
+    __tablename__ = "ai_usage_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    connection_id: Mapped[int | None] = mapped_column(ForeignKey("ai_connections.id", ondelete="SET NULL"), index=True)
+    provider_code: Mapped[str] = mapped_column(String(32))
+    model_id: Mapped[str | None] = mapped_column(String(200))
+    purpose: Mapped[str] = mapped_column(String(32))
+    prompt_version: Mapped[str] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(16))
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

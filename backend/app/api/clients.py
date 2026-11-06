@@ -168,9 +168,9 @@ async def delete_client(item_id: int, user: User = Depends(current_user), db: As
     item = await _own_item(db, user, item_id)
     from sqlalchemy import delete
 
-    from ..models import MonitorSnapshot, RegistryEvent
+    from ..models import FinanceReport, MonitorSnapshot, RegistryEvent
 
-    for model in (RegistryEvent, MonitorSnapshot, CompanyProfile):
+    for model in (RegistryEvent, MonitorSnapshot, CompanyProfile, FinanceReport):
         await db.execute(delete(model).where(model.portfolio_item_id == item.id))
     await db.delete(item)
     await db.commit()

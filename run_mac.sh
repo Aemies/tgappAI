@@ -16,6 +16,10 @@ set -a; . "$SECRETS"; set +a
 : "${TELEGRAM_BOT_TOKEN:?Заполните TELEGRAM_BOT_TOKEN}" "${SESSION_SECRET:?Заполните SESSION_SECRET}"
 export DATABASE_URL="sqlite+aiosqlite:///$DATA/radar.db"
 export STATIC_DIR="$ROOT/frontend/dist"
+# GigaChat работает на сертификате Минцифры: скачиваем корневой сертификат один раз
+CA="$DATA/russian_trusted_root_ca.pem"
+[ -s "$CA" ] || curl -fsSL https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt -o "$CA" 2>/dev/null || rm -f "$CA"
+[ -s "$CA" ] && export GIGACHAT_CA_FILE="$CA"
 
 need() { command -v "$1" >/dev/null || { echo "Не найден $1. Установите: brew install $2"; exit 1; }; }
 need python3 python; need npm node; need cloudflared cloudflared
