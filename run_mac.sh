@@ -46,9 +46,15 @@ done
 [ -n "$URL" ] || { echo "Туннель не поднялся, см. $LOG/tunnel.log"; exit 1; }
 export WEBAPP_URL="$URL"
 
+# ждём, пока туннель реально подключится, иначе бот раздаст неработающую ссылку
+for _ in $(seq 1 60); do
+  grep -q "Registered tunnel connection" "$LOG/tunnel.log" && break; sleep 1
+done
+grep -q "Registered tunnel connection" "$LOG/tunnel.log" || { echo "Туннель не подключился за минуту, см. $LOG/tunnel.log"; exit 1; }
+
 (cd bot && exec ../.venv/bin/python -m radar_bot) >"$LOG/bot.log" 2>&1 &
 PIDS+=($!)
 
 echo "Готово. Кабинет: $URL"
-echo "Откройте бота в Telegram и нажмите /start. Логи: $LOG"
+echo "Отправьте боту /start и откройте кабинет кнопкой из НОВОГО сообщения: старые кнопки ведут на прошлый адрес. Логи: $LOG"
 wait
