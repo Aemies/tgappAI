@@ -20,3 +20,4 @@ dist/
 secrets.env
 *.tsbuildinfo
 *.db
+data/

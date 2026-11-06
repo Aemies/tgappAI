@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     # Срок жизни сессии Mini App
     session_ttl: int = 12 * 3600
     default_timezone: str = "Europe/Moscow"
+    # Папка со сборкой Mini App. Если задана, backend сам отдаёт кабинет (режим «всё в одном» для Mac)
+    static_dir: str = ""
 
 
 @lru_cache

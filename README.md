@@ -13,6 +13,15 @@ Telegram Mini App для клиентских менеджеров: личный
 | `frontend/` | Mini App на React + Vite, тема берётся из Telegram |
 | `docs/` | Результаты этапа 0: что отдаёт Checko API |
 
+## Пилот на Mac (без Docker)
+
+```sh
+brew install python node cloudflared     # один раз
+./run_mac.sh ~/путь/к/secrets.env
+```
+
+Скрипт ставит зависимости, собирает кабинет, создаёт базу SQLite в `data/`, открывает бесплатный HTTPS-туннель Cloudflare и запускает backend и бота. Адрес туннеля меняется при каждом запуске, бот подхватывает его сам. Работает, пока Mac не спит. Не кладите репозиторий в iCloud: `node_modules` и `.venv` будут синхронизироваться.
+
 ## Запуск через Docker
 
 ```sh
